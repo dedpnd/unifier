@@ -74,6 +74,5 @@ postgres - СУБД
 }
 ```
 
-Для просмотра топиков можно использовать консоль redpand - http://localhost:8081/topics
-Набор тестовых данных для топика входящих событий - `./kafka-perf-test/scripts/example.json`
-
+Для просмотра топиков можно использовать консоль redpand - http://localhost:8081/topics  
+Набор тестовых данных для топика входящих событий - `./kafka-perf-test/scripts/example.json`  
