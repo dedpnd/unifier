@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  kafka-workload:
+    container_name: kafka-workload
+    build: .
+    environment:
+      KAFKA_TOPIC: "events"
+      NUM_RECORDS: "99"
+      PRODUCER_THROUGHPUT: "100"
+      TEST_INTERVAL_SECONDS: "60"
+      BOOTSTRAP_SERVERS: "10.10.206.41:9090"
+    command: [./producer_test.sh]
