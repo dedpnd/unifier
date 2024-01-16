@@ -1,0 +1,2 @@
+DELETE FROM users WHERE id=1;
+DELETE FROM rules WHERE id=1;
