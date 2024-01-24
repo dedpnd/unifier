@@ -1,9 +1,10 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type responseObserver struct {
@@ -23,7 +24,7 @@ func (o *responseObserver) WriteHeader(code int) {
 	o.status = code
 }
 
-func Logger() func(h http.Handler) http.Handler {
+func Logger(lg *zap.Logger) func(h http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			start := time.Now()
@@ -33,8 +34,13 @@ func Logger() func(h http.Handler) http.Handler {
 
 			duration := time.Since(start)
 
-			log.Printf(`Fetch URL: [ method:%v, uri:%v, status: %v, size: %v, duration:%v ]`,
-				req.Method, req.RequestURI, o.status, o.written, duration)
+			lg.Info("Fetch URL:",
+				zap.String("method", req.Method),
+				zap.String("uri", req.RequestURI),
+				zap.Int("status", o.status),
+				zap.Int64("size", o.written),
+				zap.Duration("duration", duration),
+			)
 		})
 	}
 }

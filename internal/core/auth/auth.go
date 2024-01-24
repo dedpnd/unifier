@@ -3,7 +3,6 @@ package auth
 import (
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -47,10 +46,8 @@ func VerifyJWTandGetPayload(token string) (Claims, error) {
 
 	if err != nil {
 		if errors.Is(err, jwt.ErrSignatureInvalid) {
-			log.Println(fmt.Errorf("invalid jwt token: %w", err))
 			return *claims, fmt.Errorf("failed signature from jwt: %w", err)
 		}
-		log.Println(fmt.Errorf("invalid jwt token: %w", err))
 		return *claims, fmt.Errorf("invalid jwt token: %w", err)
 	}
 

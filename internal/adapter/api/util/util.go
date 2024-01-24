@@ -6,14 +6,10 @@ import (
 	"github.com/dedpnd/unifier/internal/core/auth"
 )
 
-type contextKey string
+type contextKey int
 
-func (c contextKey) String() string {
-	return string(c)
-}
-
-var (
-	ContextKeyToken = contextKey("deleteCaller")
+const (
+	ContextKeyToken contextKey = iota
 )
 
 func GetTokenFromContext(ctx context.Context) (auth.Claims, bool) {

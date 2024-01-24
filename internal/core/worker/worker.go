@@ -6,20 +6,20 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/dedpnd/unifier/internal/models"
 	"github.com/segmentio/kafka-go"
+	"go.uber.org/zap"
 )
 
-func Start(ctx context.Context, kafkaURL string, wrkConfig workerEntity) error {
+func Start(ctx context.Context, kafkaURL string, wrkConfig workerEntity, lg *zap.Logger) error {
 	var r *kafka.Reader
 	var p *kafka.Conn
 
-	log.Println("Worker start:", wrkConfig.ID)
+	lg.Info("Worker start", zap.String("ID", wrkConfig.ID))
 
 	// Создаем kafka consumer
 	r = kafka.NewReader(kafka.ReaderConfig{
@@ -66,13 +66,13 @@ func Start(ctx context.Context, kafkaURL string, wrkConfig workerEntity) error {
 				// Унификация полей
 				err = unificationFields(pEvent, wrkConfig.Config.Unifier, &uniferEvents)
 				if err != nil {
-					log.Println(err.Error())
+					lg.Error(err.Error())
 				}
 
 				// Допольнительная обработка
 				err = extraProcess(wrkConfig.Config.ExtraProcess, &uniferEvents)
 				if err != nil {
-					log.Println(err.Error())
+					lg.Error(err.Error())
 				}
 
 				buf, err := json.Marshal(uniferEvents)
@@ -86,7 +86,7 @@ func Start(ctx context.Context, kafkaURL string, wrkConfig workerEntity) error {
 				}
 			}
 		case <-wrkConfig.Stop:
-			log.Println("Worker stop:", wrkConfig.ID)
+			lg.Info("Worker stop", zap.String("ID", wrkConfig.ID))
 
 			err := r.Close()
 			if err != nil {

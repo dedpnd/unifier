@@ -6,24 +6,27 @@ import (
 	"github.com/dedpnd/unifier/internal/adapter/store"
 	"github.com/dedpnd/unifier/internal/core/worker"
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
-func Router(str store.Storage, pool worker.Pool) (chi.Router, error) {
+func Router(lg *zap.Logger, str store.Storage, pool worker.Pool) (chi.Router, error) {
 	r := chi.NewRouter()
 
-	r.Use(middleware.Logger())
+	r.Use(middleware.Logger(lg))
 
 	rulesHandler := rest.RulesHandler{
-		Store: str,
-		Pool:  pool,
+		Logger: lg,
+		Store:  str,
+		Pool:   pool,
 	}
 
-	r.With(middleware.JWTguard()).Get("/api/rules", rulesHandler.GetAllRules)
-	r.With(middleware.JWTguard()).Post("/api/rules", rulesHandler.CreateRule)
-	r.With(middleware.JWTguard()).Delete("/api/rules/{id}", rulesHandler.DeleteRule)
+	r.With(middleware.JWTguard).Get("/api/rules", rulesHandler.GetAllRules)
+	r.With(middleware.JWTguard).Post("/api/rules", rulesHandler.CreateRule)
+	r.With(middleware.JWTguard).Delete("/api/rules/{id}", rulesHandler.DeleteRule)
 
 	userHandler := rest.UserHandler{
-		Store: str,
+		Logger: lg,
+		Store:  str,
 	}
 
 	r.Post("/api/user/register", userHandler.Register)

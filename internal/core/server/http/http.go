@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -10,9 +9,10 @@ import (
 	"syscall"
 
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
-func GracefulServer(addr string, r chi.Router, cb func()) {
+func GracefulServer(addr string, r chi.Router, lg *zap.Logger, cb func()) {
 	var wg sync.WaitGroup
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 
@@ -30,7 +30,7 @@ func GracefulServer(addr string, r chi.Router, cb func()) {
 
 	go func() {
 		if err := http.ListenAndServe(addr, r); err != nil {
-			log.Fatal(err.Error())
+			lg.Fatal(err.Error())
 		}
 	}()
 

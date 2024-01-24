@@ -3,14 +3,15 @@ package worker
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/dedpnd/unifier/internal/adapter/store"
 	"github.com/dedpnd/unifier/internal/models"
+	"go.uber.org/zap"
 )
 
 type Pool struct {
+	logger   *zap.Logger
 	kafkaURL string
 	p        map[string]workerEntity
 }
@@ -21,8 +22,9 @@ type workerEntity struct {
 	Stop   chan bool
 }
 
-func StartPool(kAddr string, str store.Storage) (Pool, error) {
+func StartPool(kAddr string, str store.Storage, lg *zap.Logger) (Pool, error) {
 	p := Pool{
+		logger:   lg,
 		kafkaURL: kAddr,
 		p:        make(map[string]workerEntity),
 	}
@@ -48,8 +50,8 @@ func (p Pool) AddWorker(id string, rule models.Config) {
 	}
 
 	go func() {
-		if err := Start(context.Background(), p.kafkaURL, p.p[id]); err != nil {
-			log.Println(err.Error())
+		if err := Start(context.Background(), p.kafkaURL, p.p[id], p.logger); err != nil {
+			p.logger.With(zap.Error(err)).Error("Worker has error", zap.String("ID", id))
 		}
 	}()
 }

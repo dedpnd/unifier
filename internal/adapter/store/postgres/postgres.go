@@ -5,7 +5,6 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/dedpnd/unifier/internal/models"
 	"github.com/golang-migrate/migrate/v4"
@@ -13,6 +12,7 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 )
@@ -21,13 +21,15 @@ type DataBase struct {
 	pool *pgxpool.Pool
 }
 
-func NewDB(ctx context.Context, dsn string) (DataBase, error) {
+var ErrUserUniq = errors.New("such a user exists")
+
+func NewDB(ctx context.Context, dsn string, lg *zap.Logger) (DataBase, error) {
 	pool, err := connection(ctx, dsn)
 	if err != nil {
 		return DataBase{}, fmt.Errorf("failed connection to postgre: %w", err)
 	}
 
-	log.Println("Connection to postgre: success")
+	lg.Info("Connection to postgre: success")
 
 	if err := runMigrations(dsn); err != nil {
 		return DataBase{}, fmt.Errorf("failed to run DB migrations: %w", err)
@@ -78,7 +80,12 @@ func (db DataBase) CreateUser(ctx context.Context, user models.User) (int, error
 	var id int
 	err := row.Scan(&id)
 	if err != nil {
-		return 0, fmt.Errorf("failed scan user record row: %w", err)
+		var pgErr *pgconn.PgError
+		if !(errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation) {
+			return 0, fmt.Errorf("unique violation: %w", err)
+		}
+
+		return 0, ErrUserUniq
 	}
 
 	return id, nil
