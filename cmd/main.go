@@ -47,7 +47,7 @@ func main() {
 	callback := func() {
 		err := str.Close()
 		if err != nil {
-			lg.Fatal(err.Error())
+			lg.Info(err.Error())
 		}
 
 		p.StopPool()
