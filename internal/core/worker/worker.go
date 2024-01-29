@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -132,18 +133,32 @@ func unificationFields(event map[string]interface{}, cfgUnifier []models.Unifier
 					(*uEvent)[u.Name] = v
 				}
 			case "int":
-				v, ok := v.(int)
+				vv, ok := v.(int)
 				if ok {
-					(*uEvent)[u.Name] = v
+					(*uEvent)[u.Name] = vv
+					return nil
 				}
+
+				v, ok := v.(string)
+				if !ok {
+					return fmt.Errorf("failed int parse to string: %v", v)
+				}
+
+				i, err := strconv.Atoi(v)
+				if err != nil {
+					return fmt.Errorf("failed int parse: %w", err)
+				}
+
+				(*uEvent)[u.Name] = i
 			case "timestamp":
 				v, ok := v.(string)
 				if ok {
 					v, err := time.Parse(time.RFC3339, v)
+
 					if err != nil {
 						return fmt.Errorf("failed date parse: %w", err)
 					}
-					(*uEvent)[u.Name] = v
+					(*uEvent)[u.Name] = v.String()
 				}
 			default:
 				return fmt.Errorf("unknown type: %v", u.Type)

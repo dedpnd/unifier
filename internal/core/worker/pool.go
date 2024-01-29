@@ -52,18 +52,24 @@ func (p Pool) AddWorker(id string, rule models.Config) {
 	go func() {
 		if err := Start(context.Background(), p.kafkaURL, p.p[id], p.logger); err != nil {
 			p.logger.With(zap.Error(err)).Error("Worker has error", zap.String("ID", id))
+
+			// TODO: Перезапускать воркер ?
+			// Удаляем конфигурацию из пула так как она не работает
+			delete(p.p, id)
 		}
 	}()
 }
 
 func (p Pool) DeleteWorker(id string) {
-	wrk := p.p[id]
+	wrk, ok := p.p[id]
 
-	// Останнавливаем воркер
-	wrk.Stop <- true
+	if ok {
+		// Останнавливаем воркер
+		wrk.Stop <- true
 
-	// Удаляем конфигурацию
-	delete(p.p, id)
+		// Удаляем конфигурацию
+		delete(p.p, id)
+	}
 }
 
 func (p Pool) StopPool() {
