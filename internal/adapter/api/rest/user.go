@@ -36,15 +36,10 @@ func (h UserHandler) Register(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	data, err := h.Store.GetUserByLogin(req.Context(), *pBody.Login)
+	_, err := h.Store.GetUserByLogin(req.Context(), *pBody.Login)
 	if err != nil {
 		h.Logger.With(zap.Error(err)).Error("failed get user from database")
 		http.Error(res, IntServerError, http.StatusInternalServerError)
-		return
-	}
-
-	if data.ID > 0 {
-		http.Error(res, `login exist`, http.StatusConflict)
 		return
 	}
 
@@ -57,7 +52,8 @@ func (h UserHandler) Register(res http.ResponseWriter, req *http.Request) {
 
 	id, err := h.Store.CreateUser(req.Context(), models.User{Login: *pBody.Login, Hash: string(hash)})
 	if err != nil {
-		if errors.Is(err, postgres.ErrUserUniq) {
+		var userUniqErr *postgres.ErrUserUniq
+		if errors.As(err, &userUniqErr) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
 		}

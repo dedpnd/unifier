@@ -102,7 +102,7 @@ func (h RulesHandler) DeleteRule(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if dr.Owner != token.ID {
+	if *dr.Owner != token.ID {
 		http.Error(res, "forbidden", http.StatusForbidden)
 		return
 	}

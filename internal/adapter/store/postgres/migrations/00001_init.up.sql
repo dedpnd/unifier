@@ -9,20 +9,15 @@ CREATE TABLE IF NOT EXISTS users(
 CREATE TABLE IF NOT EXISTS rules(	
 	ID SERIAL PRIMARY KEY NOT NULL,
   Rule JSON NOT NULL,
-	Owner INT NOT NULL,
+	Owner INT NULL,
 	CONSTRAINT fk_users
       FOREIGN KEY(Owner) 
 				REFERENCES users(ID)
 				ON DELETE SET NULL
 );
 
--- password is password
-INSERT INTO users
-(login, hash)
-VALUES('admin', '$2a$10$fvuwEbdImMWCPGzjuJ7pbOAQnZ/e9VyrVK60ComfJiEJvgkORJTci'); 
-
 INSERT INTO rules
 ("rule", "owner")
-VALUES('{"topicFrom":"events","filter":{"regexp":"\"dstHost.ip\": \"10.10.10.10\""},"entityHash":["srcHost.ip","dstHost.port"],"unifier":[{"name":"id","type":"string","expression":"auditEventLog"},{"name":"date","type":"timestamp","expression":"datetime"},{"name":"ipaddr","type":"string","expression":"srcHost.ip"},{"name":"category","type":"string","expression":"cat"}],"extraProcess":[{"func":"__if","args":"category, /Host/Connect/Host/Accept, high","to":"category"},{"func":"__stringConstant","args":"test","to":"customString1"}],"topicTo":"test"}'::json, 1);
+VALUES('{"topicFrom":"events","filter":{"regexp":"\"dstHost.ip\": \"10.10.10.10\""},"entityHash":["srcHost.ip","dstHost.port"],"unifier":[{"name":"id","type":"string","expression":"auditEventLog"},{"name":"date","type":"timestamp","expression":"datetime"},{"name":"ipaddr","type":"string","expression":"srcHost.ip"},{"name":"category","type":"string","expression":"cat"}],"extraProcess":[{"func":"__if","args":"category, /Host/Connect/Host/Accept, high","to":"category"},{"func":"__stringConstant","args":"test","to":"customString1"}],"topicTo":"test"}'::json, NULL);
 
 COMMIT;

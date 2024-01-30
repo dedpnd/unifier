@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"errors"
 	"net/http"
 
@@ -29,7 +28,7 @@ func JWTguard(h http.Handler) http.Handler {
 		}
 
 		ctx := req.Context()
-		r := req.WithContext(context.WithValue(ctx, util.ContextKeyToken, pl))
+		r := req.WithContext(util.SetTokenToContext(ctx, pl))
 
 		h.ServeHTTP(res, r)
 	})

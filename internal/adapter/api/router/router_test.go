@@ -24,11 +24,10 @@ import (
 )
 
 var db *sql.DB
-var databaseUrl string
+var databaseURL string
 
 func TestMain(m *testing.M) {
 	// uses a sensible default on windows (tcp/http) and linux/osx (socket)
-	//nolint:typecheck // dockertest is defined
 	pool, err := dockertest.NewPool("")
 	if err != nil {
 		log.Fatalf("Could not construct pool: %s", err)
@@ -40,7 +39,6 @@ func TestMain(m *testing.M) {
 	}
 
 	// pulls an image, creates a container based on it and runs it
-	//nolint:typecheck // dockertest is defined
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "postgres",
 		Tag:        "16.1-alpine3.18",
@@ -59,26 +57,35 @@ func TestMain(m *testing.M) {
 	}
 
 	hostAndPort := resource.GetHostPort("5432/tcp")
-	databaseUrl = fmt.Sprintf("postgres://test:test@%s?sslmode=disable", hostAndPort)
+	databaseURL = fmt.Sprintf("postgres://test:test@%s?sslmode=disable", hostAndPort)
 
-	log.Println("Connecting to database on url: ", databaseUrl)
+	log.Println("Connecting to database on url: ", databaseURL)
 
 	// Tell docker to hard kill the container in 120 seconds
-	resource.Expire(120)
+	err = resource.Expire(120)
+	if err != nil {
+		log.Fatalf("Expire resource has error: %s", err)
+	}
 
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	pool.MaxWait = 20 * time.Second
 	if err = pool.Retry(func() error {
-		db, err = sql.Open("postgres", databaseUrl)
+		db, err = sql.Open("postgres", databaseURL)
 		if err != nil {
-			return err
+			return fmt.Errorf("Connection has error: %w", err)
 		}
-		return db.Ping()
+
+		err = db.Ping()
+		if err != nil {
+			return fmt.Errorf("Ping has error: %w", err)
+		}
+
+		return nil
 	}); err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	//Run tests
+	// Run tests
 	code := m.Run()
 
 	// You can't defer this because os.Exit doesn't care for defer
@@ -127,7 +134,8 @@ func TestRouter(t *testing.T) {
 			authorization: true,
 			url:           "/api/rules",
 			expectedCode:  http.StatusOK,
-			expectedBody:  "[{\"id\":1,\"rule\":{\"topicFrom\":\"events\",\"filter\":{\"regexp\":\"\\\"dstHost.ip\\\": \\\"10.10.10.10\\\"\"},\"entityHash\":[\"srcHost.ip\",\"dstHost.port\"],\"unifier\":[{\"name\":\"id\",\"type\":\"string\",\"expression\":\"auditEventLog\"},{\"name\":\"date\",\"type\":\"timestamp\",\"expression\":\"datetime\"},{\"name\":\"ipaddr\",\"type\":\"string\",\"expression\":\"srcHost.ip\"},{\"name\":\"category\",\"type\":\"string\",\"expression\":\"cat\"}],\"extraProcess\":[{\"func\":\"__if\",\"args\":\"category, /Host/Connect/Host/Accept, high\",\"to\":\"category\"},{\"func\":\"__stringConstant\",\"args\":\"test\",\"to\":\"customString1\"}],\"topicTo\":\"test\"},\"owner\":1}]\n",
+			//nolint:lll // This legal size
+			expectedBody: "[{\"id\":1,\"rule\":{\"topicFrom\":\"events\",\"filter\":{\"regexp\":\"\\\"dstHost.ip\\\": \\\"10.10.10.10\\\"\"},\"entityHash\":[\"srcHost.ip\",\"dstHost.port\"],\"unifier\":[{\"name\":\"id\",\"type\":\"string\",\"expression\":\"auditEventLog\"},{\"name\":\"date\",\"type\":\"timestamp\",\"expression\":\"datetime\"},{\"name\":\"ipaddr\",\"type\":\"string\",\"expression\":\"srcHost.ip\"},{\"name\":\"category\",\"type\":\"string\",\"expression\":\"cat\"}],\"extraProcess\":[{\"func\":\"__if\",\"args\":\"category, /Host/Connect/Host/Accept, high\",\"to\":\"category\"},{\"func\":\"__stringConstant\",\"args\":\"test\",\"to\":\"customString1\"}],\"topicTo\":\"test\"},\"owner\":1}]\n",
 		},
 		{
 			name:          "Add new rule",
@@ -163,7 +171,7 @@ func TestRouter(t *testing.T) {
 	}
 
 	// Создаем хранилище
-	str, err := store.NewStore(databaseUrl, lg)
+	str, err := store.NewStore(databaseURL, lg)
 	if err != nil {
 		assert.NoError(t, err)
 	}

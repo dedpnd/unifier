@@ -9,7 +9,7 @@ type User struct {
 type Rule struct {
 	ID    int    `json:"id"`
 	Rule  Config `json:"rule"`
-	Owner int    `json:"owner"`
+	Owner *int   `json:"owner"`
 }
 
 type Config struct {

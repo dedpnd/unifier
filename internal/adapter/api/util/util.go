@@ -16,3 +16,7 @@ func GetTokenFromContext(ctx context.Context) (auth.Claims, bool) {
 	caller, ok := ctx.Value(ContextKeyToken).(auth.Claims)
 	return caller, ok
 }
+
+func SetTokenToContext(ctx context.Context, pl auth.Claims) context.Context {
+	return context.WithValue(ctx, ContextKeyToken, pl)
+}
