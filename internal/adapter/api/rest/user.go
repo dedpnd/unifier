@@ -52,7 +52,7 @@ func (h UserHandler) Register(res http.ResponseWriter, req *http.Request) {
 
 	id, err := h.Store.CreateUser(req.Context(), models.User{Login: *pBody.Login, Hash: string(hash)})
 	if err != nil {
-		var userUniqErr *postgres.ErrUserUniq
+		var userUniqErr *postgres.UserUniqError
 		if errors.As(err, &userUniqErr) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
