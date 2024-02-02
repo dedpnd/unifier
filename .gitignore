@@ -10,6 +10,8 @@ golangci-lint
 
 # Test binary, built with `go test -c`
 *.test
+profile.cov
+coverage.out
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
