@@ -1,4 +1,5 @@
 # Как запустить ?
+![Coverage](https://img.shields.io/badge/Coverage-59.6%25-yellow)
 
 Все необходимые службы для работы находятся в docker-compose
 
