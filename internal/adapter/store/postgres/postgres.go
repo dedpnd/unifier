@@ -21,18 +21,7 @@ type DataBase struct {
 	pool *pgxpool.Pool
 }
 
-type UserUniqError struct {
-	Login string
-	Err   error
-}
-
-func (e *UserUniqError) Error() string {
-	return fmt.Sprintf("unique violation for login: %s", e.Login)
-}
-
-func (e *UserUniqError) Unwrap() error {
-	return e.Err
-}
+var ErrUserUniq = errors.New("user already exists")
 
 func NewDB(ctx context.Context, dsn string, lg *zap.Logger) (DataBase, error) {
 	pool, err := connection(ctx, dsn)
@@ -93,7 +82,7 @@ func (db DataBase) CreateUser(ctx context.Context, user models.User) (int, error
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return 0, &UserUniqError{Login: user.Login, Err: err}
+			return 0, fmt.Errorf("failed to create a new user with login %s: %w", user.Login, ErrUserUniq)
 		}
 
 		return 0, fmt.Errorf("failed scan row: %w", err)
