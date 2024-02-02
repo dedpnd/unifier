@@ -158,7 +158,7 @@ func unificationFields(event map[string]interface{}, cfgUnifier []models.Unifier
 					if err != nil {
 						return fmt.Errorf("failed date parse: %w", err)
 					}
-					(*uEvent)[u.Name] = v.String()
+					(*uEvent)[u.Name] = v.Format("2006-01-02 15:04:05")
 				}
 			default:
 				return fmt.Errorf("unknown type: %v", u.Type)

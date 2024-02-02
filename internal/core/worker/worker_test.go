@@ -164,7 +164,7 @@ func Test_unificationFields(t *testing.T) {
 			},
 			want: want{
 				key:   "testTime",
-				value: "2023-07-13 13:47:43 +0000 +0000",
+				value: "2023-07-13 13:47:43",
 			},
 			wantErr: false,
 		},
